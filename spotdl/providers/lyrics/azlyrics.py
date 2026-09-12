@@ -76,19 +76,35 @@ class AzLyrics(LyricsProvider):
         if len(td_tags) == 0:
             return {}
 
+        from bs4.element import Tag
+
         results = {}
         for td_tag in td_tags:
-            a_tags = td_tag.find_all("a", href=True)
-            if len(a_tags) == 0:
+            # Ensure td_tag is a Tag before calling Tag methods
+            if not isinstance(td_tag, Tag):
                 continue
 
-            a_tag = a_tags[0]
-            url = a_tag["href"].strip()
+            # Filter to Tag instances just in case
+            a_candidates = [
+                a for a in td_tag.find_all("a", href=True) if isinstance(a, Tag)
+            ]
+            if not a_candidates:
+                continue
+
+            a_tag = a_candidates[0]
+            url = (a_tag.get("href") or "").strip()
             if url == "":
                 continue
 
-            title = td_tag.find("span").get_text().strip()
-            artist = td_tag.find("b").get_text().strip()
+            span = td_tag.find("span")
+            if not isinstance(span, Tag):
+                continue
+            title = span.get_text().strip()
+
+            b_tag = td_tag.find("b")
+            if not isinstance(b_tag, Tag):
+                continue
+            artist = b_tag.get_text().strip()
 
             results[f"{artist} - {title}"] = url
 

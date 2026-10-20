@@ -78,17 +78,25 @@ class AzLyrics(LyricsProvider):
 
         results = {}
         for td_tag in td_tags:
+            if not isinstance(td_tag, Tag):
+                continue
             a_tags = td_tag.find_all("a", href=True)
             if len(a_tags) == 0:
                 continue
 
             a_tag = a_tags[0]
-            url = a_tag["href"].strip()
+            if not isinstance(a_tag, Tag):
+                continue
+            url = a_tag.get("href", "").strip()
             if url == "":
                 continue
 
-            title = td_tag.find("span").get_text().strip()
-            artist = td_tag.find("b").get_text().strip()
+            span_tag = td_tag.find("span")
+            b_tag = td_tag.find("b")
+            if not isinstance(span_tag, Tag) or not isinstance(b_tag, Tag):
+                continue
+            title = span_tag.get_text().strip()
+            artist = b_tag.get_text().strip()
 
             results[f"{artist} - {title}"] = url
 
@@ -111,9 +119,14 @@ class AzLyrics(LyricsProvider):
 
         # Find all divs that don't have a class
         div_tags = soup.find_all("div", class_=False, id_=False)
+        # Filter to only Tag instances
+        tag_divs = [tag for tag in div_tags if isinstance(tag, Tag)]
+
+        if not tag_divs:
+            return None
 
         # Find the div with the longest text
-        lyrics_div = sorted(div_tags, key=lambda x: len(x.text))[-1]
+        lyrics_div = sorted(tag_divs, key=lambda x: len(x.get_text()))[-1]
 
         # extract lyrics from div and clean it up
         lyrics = lyrics_div.get_text().strip()

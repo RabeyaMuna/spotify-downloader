@@ -2,10 +2,10 @@
 AZLyrics lyrics module.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, cast
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from spotdl.providers.lyrics.base import LyricsProvider
 
@@ -72,23 +72,23 @@ class AzLyrics(LyricsProvider):
         if soup is None:
             return {}
 
-        td_tags = soup.find_all("td")
+        td_tags = cast(list[Tag], soup.find_all("td"))
         if len(td_tags) == 0:
             return {}
 
         results = {}
         for td_tag in td_tags:
-            a_tags = td_tag.find_all("a", href=True)
+            a_tags = cast(list[Tag], td_tag.find_all("a", href=True))
             if len(a_tags) == 0:
                 continue
 
             a_tag = a_tags[0]
-            url = a_tag["href"].strip()
+            url = a_tag["href"].strip()  # type: ignore[union-attr]
             if url == "":
                 continue
 
-            title = td_tag.find("span").get_text().strip()
-            artist = td_tag.find("b").get_text().strip()
+            title = td_tag.find("span").get_text().strip()  # type: ignore[union-attr]
+            artist = td_tag.find("b").get_text().strip()  # type: ignore[union-attr]
 
             results[f"{artist} - {title}"] = url
 
